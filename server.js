@@ -23,7 +23,7 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors())
 
-app.get('/', (req, res) => {res.send(database.users)})
+// app.get('/', (req, res) => {res.send(database.users)})
 app.post('/signin', (req, res) => { signin.handleSignin(req, res, db, bcrypt) })
 app.post('/register', (req, res) => { register.handleRegister(req, res, db, bcrypt) })
 app.put('/image', (req, res) => { image.handleImage(req, res, db) })
@@ -36,7 +36,7 @@ app.listen(3000, () => {
 /*
 / --> res = this is working
 /signin = POST => Verifies password in DB and returns user info
-/register = POST => Inserts register info into DB 
+/register = POST => Inserts register info into DB
 /profile/:userId = GET => Gets Info of user ID
 /image = PUT => Increments the entry number of user
 */

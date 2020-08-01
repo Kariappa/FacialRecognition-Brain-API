@@ -1,4 +1,4 @@
-const handleProfileGet = (req,res,db) => {
+const handleProfileGet = (req, res, db) => {
     (req, res) => {
         const { id } = req.params
         let found = false;
@@ -12,16 +12,9 @@ const handleProfileGet = (req,res,db) => {
                 }
             })
             .catch(err => res.staths(400).json('Error getting User'))
-    
-    
-    
     }
-    
-    
-    
-
 }
 
 module.exports = {
-    handleProfileGet : handleProfileGet
+    handleProfileGet: handleProfileGet
 }
