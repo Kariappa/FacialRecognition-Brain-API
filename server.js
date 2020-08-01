@@ -4,6 +4,10 @@ const cors = require("cors")
 const knex = require('knex')
 const bodyParser = require('body-parser');
 
+const register = require('./controllers/register')
+const signin = require('./controllers/signin')
+const profile = require('./controllers/signin')
+const image = require('./controllers/image')
 
 const db = knex({
     client: 'pg',
@@ -15,145 +19,15 @@ const db = knex({
     }
 });
 
-// db.select('*').from('users').then(data => {
-//     console.log(data)
-// })
-
 const app = express();
-// app.use(express.json());
 app.use(bodyParser.json());
-
 app.use(cors())
 
-const database = {
-    users: [
-        {
-            id: '123',
-            name: 'ali',
-            email: 'ali@hotmail.com',
-            password: 'react',
-            entries: 0,
-            joined: new Date()
-        },
-        {
-            id: '456',
-            name: 'bob',
-            email: 'bob@hotmail.com',
-            password: 'node',
-            entries: 0,
-            joined: new Date()
-        }
-    ]
-}
-
-// app.use(express.urlencoded({extended: false}));
-
-
-app.get('/', (req, res) => {
-    res.send(database.users)
-})
-
-
-app.post('/signin', (req, res) => {
-
-    db.select('email','hash').from('login')
-        .where('email', '=', req.body.email)
-    .then(data => {
-        const isValid = bcrypt.compareSync(req.body.password,data[0].hash)
-        if (isValid){
-           return db.select('*').from('users')
-            .where('email','=',req.body.email)
-            .then(user => {
-                res.json(user[0])
-            })
-            .catch(err => res.status(400).json('unable to get user'))
-        } else {
-        res.status(400).json("Wrong Credentials")
-        }
-    })
-    .catch(err => res.status(400).json('Wrong Credentials'))
-
-})
-
-app.post('/register', (req, res) => {
-    const { email, name, password } = req.body
-    const hash = bcrypt.hashSync(password)
-
-    db.transaction(trx => {
-        trx.insert({
-            hash: hash,
-            email: email
-        })
-        .into('login')
-        .returning('email')
-        .then(loginEmail => {
-            return trx('users')
-            .returning('*')
-    
-            .insert({
-                email: loginEmail[0],
-                name: name,
-                joined: new Date()
-            })
-    
-            .then(user => {
-            
-                    res.json(user[0]); //returns array, so [0] to return the first object in the array
-            })
-            })
-            .then(trx.commit)
-            .catch(trx.rollback)
-        })
-            .catch(err => res.status(400).json('Unable to register'))
-        
-    })
-
-
-
-
-
-
-
-
-app.get('/profile/:id', (req, res) => {
-    const { id } = req.params
-    let found = false;
-    db.select("*").from('users').where({ id })
-        .then(user => {
-            if (user.length) {
-                res.json(user[0])
-            }
-            else {
-                res.status(400).json('Not Found')
-            }
-        })
-        .catch(err => res.staths(400).json('Error getting User'))
-
-
-
-})
-
-
-
-app.put('/image', (req, res) => {
-    const { id } = req.body
-
-    db('users').where('id','=', id)
-    .increment('entries',1)
-    .returning('entries')
-    .then(entries => {
-        res.json(entries[0])
-    })
-    .catch(err => res.status(400).json("Error updating entires"))
-
-})
-
-
-
-
-
-
-
+app.get('/', (req, res) => {res.send(database.users)})
+app.post('/signin', (req, res) => { signin.handleSignin(req, res, db, bcrypt) })
+app.post('/register', (req, res) => { register.handleRegister(req, res, db, bcrypt) })
+app.put('/image', (req, res) => { image.handleImage(req, res, db) })
+app.get('/profile/:id', (req, res) => { profile.handleProfileGet(req, res, db) })
 
 app.listen(3000, () => {
     console.log("app is running on port 3000")
@@ -161,8 +35,8 @@ app.listen(3000, () => {
 
 /*
 / --> res = this is working
-/signin -> POST success/fail (if already cerated why POST, because dont want to be using a query string)
-/register -> POST user
-/profile/:userId --> GET user
-/image --> PUT --> user
+/signin = POST => Verifies password in DB and returns user info
+/register = POST => Inserts register info into DB 
+/profile/:userId = GET => Gets Info of user ID
+/image = PUT => Increments the entry number of user
 */
